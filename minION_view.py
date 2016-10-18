@@ -606,6 +606,8 @@ if __name__ == '__main__':
                                     else:
                                         colourlookup[temp_dict["name"]]=hex2rgb("000000")
                                 #print colourlookup
+                                scriptresult = execute_command_as_string(commands('get_scripts'), ipadd,minIONdict[minION]["port"])
+                                print scriptresult
                                 lights=True
                                 minIONdict[minION]["channelstuff"]=results["result"]["channel_states"]
                             except Exception, err:
