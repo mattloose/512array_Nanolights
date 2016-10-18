@@ -258,6 +258,7 @@ class HelpTheMinion(WebSocketClient):
     def opened(self):
         print "Connected to Master MinION Controller!"
         example.write_text("Connect!","white",3)
+        example.showlight = True
 
 
     def initialiseminion():
@@ -432,6 +433,7 @@ class ThreadingExample(object):
         """
         self.interval = interval
         self.channel_data = dict()
+        self.showlight = False
         for i in chanlookup:
             self.channel_data[i]=dict()
         # Rows and chain length are both required parameters:
@@ -445,16 +447,10 @@ class ThreadingExample(object):
     def run(self):
         """ Method that runs forever """
         while True:
-            #colour = ("red","green","white","blue","orange","purple","green")
-            #self.write_time("blue")
-            #for i in range(512):
-            #i = random.randint(1,512)
-            #x,y= self.get_x_y(i)
-            #self.matrix.SetPixel(x,y,random.randint(0,1)*128,random.randint(0,1)*128,random.randint(0,1)*128)
-
-            self.flash_state_summary()
-            print self.get_state_summary()
-            print time.time()
+            if self.showlight=True:
+                self.flash_state_summary()
+                print self.get_state_summary()
+                print time.time()
             time.sleep(0.1)
             pass
 
