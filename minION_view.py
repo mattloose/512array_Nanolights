@@ -447,10 +447,10 @@ class ThreadingExample(object):
     def run(self):
         """ Method that runs forever """
         while True:
-            if self.showlight=True:
+            if self.showlight is True:
                 self.flash_state_summary()
-                print self.get_state_summary()
-                print time.time()
+            print self.get_state_summary()
+            print time.time()
             time.sleep(0.1)
             pass
 
