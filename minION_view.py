@@ -18,12 +18,8 @@ from thrift.protocol import TCompactProtocol
 import multiprocessing
 import copy
 import platform
-import Image
-import ImageDraw,ImageFont
-from rgbmatrix import Adafruit_RGBmatrix
 import random
 import struct
-
 import hashlib
 
 # Unbuffered IO
@@ -70,8 +66,22 @@ parser.add(
     default=False,
     dest='verbose',
     )
+parser.add(
+    '-n',
+    '--no_lights',
+    action='store_true',
+    help='Inactivate lights for testing and development purposes.',
+    default=False,
+    dest='nolights',
+)
 
 args = parser.parse_args()
+
+if args.nolights is False:
+    import Image
+    import ImageDraw,ImageFont
+    from rgbmatrix import Adafruit_RGBmatrix
+
 
 version = '0.1'  # 17th October 2016
 
@@ -316,7 +326,7 @@ class DummyClient(WebSocketClient):
         if not m.is_binary:
             #print "****************** Non binary message"
             ##print type(m)
-            #print m
+            print m
             json_object = json.loads(str(m))
             for element in json_object:
                 if element == "channel_info" and json_object[element] != "null":
@@ -327,7 +337,9 @@ class DummyClient(WebSocketClient):
                             #print "****Channel*****"
                             (r,g,b) = (0,0,0)
                             #print colourlookup
+                            state = "unknown"
                             if "state" in thing.keys():
+                                state = thing["state"]
                                 #print thing["state"],thing["state_group"],thing["name"],getx(int(thing["name"])),gety(int(thing["name"]))
                                 try:
                                     #print thing
@@ -335,8 +347,9 @@ class DummyClient(WebSocketClient):
                                 except:
                                     #print "not found",thing["state"]
                                     #print colourlookup
+                                    state="undefined"
                                     (r,g,b) = (0,0,0)
-                                print thing,r,g,b
+                                #print thing,r,g,b
                             #elif "201" in thing.keys():
                             #    print "################################ NEW CHANNEL DESCRIPTORS?"
                             #    print thing
@@ -346,6 +359,7 @@ class DummyClient(WebSocketClient):
                             #except:
                             #    print "no state"
                             (x,y) = chanlookup[int(thing["name"])]
+                            example.logitem(int(thing["name"]),state)
                             example.point(x,y,r,g,b)
                     for element2 in json_object[element]:
                         if json_object[element][element2] != "null":
@@ -417,10 +431,13 @@ class ThreadingExample(object):
         :param interval: Check interval, in seconds
         """
         self.interval = interval
+        self.channel_data = dict()
+        for i in chanlookup:
+            self.channel_data[i]=dict()
         # Rows and chain length are both required parameters:
-        self.matrix = Adafruit_RGBmatrix(16, 1)
+        if args.nolights is False: self.matrix = Adafruit_RGBmatrix(16, 1)
         # use a bitmap font
-        self.font = ImageFont.load("rpi-rgb-led-matrix/fonts/4x6.pil")
+        if args.nolights is False: self.font = ImageFont.load("rpi-rgb-led-matrix/fonts/4x6.pil")
         thread = threading.Thread(target=self.run, args=())
         thread.daemon = True                            # Daemonize thread
         thread.start()                                  # Start the execution
@@ -434,32 +451,72 @@ class ThreadingExample(object):
             #i = random.randint(1,512)
             #x,y= self.get_x_y(i)
             #self.matrix.SetPixel(x,y,random.randint(0,1)*128,random.randint(0,1)*128,random.randint(0,1)*128)
-            time.sleep(1)
+
+            self.flash_state_summary()
+            print self.get_state_summary()
+            print time.time()
+            time.sleep(0.1)
             pass
 
+    def flash_state_summary(self):
+        for key,value in self.channel_data.items():
+            #print key,value
+            (r,g,b) = (0,0,0)
+            try:
+                (r,g,b) =  colourlookup[value["state"]]
+            except:
+                pass
+            (x,y) = chanlookup[int(key)]
+            self.point(x,y,r,g,b)
+
+
+
+    def get_state_summary(self):
+        state_dict = dict()
+        for key, value in self.channel_data.items():
+
+            #print value,type(value)
+            try:
+                if value["state"] in state_dict:
+                    state_dict[value["state"]] += 1
+                else:
+                    state_dict[value["state"]] = 1
+            except:
+                pass
+            #print(key, len([item for item in value if item]))
+        return state_dict
+
+    def logitem(self,channel,state):
+        self.channel_data[channel]["state"]=state
+
     def point(self,x,y,r,g,b):
-        self.matrix.SetPixel(x,y,r,g,b)
+        if args.nolights is False:
+            self.matrix.SetPixel(x,y,r,g,b)
+        else:
+            print "would do:",x,y,r,g,b
 
     def write_text(self,message,color,showtime):
-	image = Image.new("1",(320,200))
-	image = image.convert("RGBA")
-	draw = ImageDraw.Draw(image)
-	draw.text((0,0),message,font=self.font,fill=color)
-	self.matrix.Clear()
-	self.matrix.SetImage(image.im.id,1,0)
-	time.sleep(showtime)
-	self.matrix.Clear()
+        if args.nolights is False:
+            image = Image.new("1",(320,200))
+            image = image.convert("RGBA")
+            draw = ImageDraw.Draw(image)
+            draw.text((0,0),message,font=self.font,fill=color)
+            self.matrix.Clear()
+            self.matrix.SetImage(image.im.id,1,0)
+            time.sleep(showtime)
+            self.matrix.Clear()
 
     def write_time(self,color):
-	timestring=time.strftime("%H:%M:%S", time.gmtime())
-	image = Image.new("1",(320,200))
-	image = image.convert("RGBA")
-	draw = ImageDraw.Draw(image)
-	draw.text((0,0),timestring,font=self.font,fill=color)
-	#self.matrix.Clear()
-	self.matrix.SetImage(image.im.id,0,0)
-	#time.sleep(showtime)
-	#self.matrix.Clear()
+        if args.nolights is False:
+            timestring=time.strftime("%H:%M:%S", time.gmtime())
+            image = Image.new("1",(320,200))
+            image = image.convert("RGBA")
+            draw = ImageDraw.Draw(image)
+            draw.text((0,0),timestring,font=self.font,fill=color)
+            #self.matrix.Clear()
+            self.matrix.SetImage(image.im.id,0,0)
+            #time.sleep(showtime)
+            #self.matrix.Clear()
 
 
 
@@ -510,7 +567,14 @@ if __name__ == '__main__':
     lights = False
     global helper
     helper = HelpTheMinion(minwsip)
-    helper.connect()
+    try:
+        helper.connect()
+    except Exception, err:
+        print "Error",err
+        print "We guess you have not got minKNOW running on your computer at the ip address specified. Please try again."
+        example.write_text("Bye Bye!","red",3)
+        print "bye bye"
+        sys.exit()
     ringtone = 0
 
     try:
@@ -533,38 +597,45 @@ if __name__ == '__main__':
                             try:
                             #if 1:
                                 minIONclassdict[minION]["class"].connect()
-                                print "GETTTING THE GOOD STUFF"
+                                #print "GETTTING THE GOOD STUFF"
                                 results = execute_command_as_string(commands('get_analysis_configuration'), ipadd,minIONdict[minION]["port"])
-                                print results["result"]["channel_states"]
+                                #print results["result"]["channel_states"]
                                 for thing in results["result"]["channel_states"]:
-                                    #print thing
-                                    #print results["result"]["channel_states"][thing]
-                                    #print json.dumps(results["result"]["channel_states"][thing])
                                     temp_dict = results["result"]["channel_states"][thing]
-                                    print temp_dict
-                                    #print type(temp_dict)
+                                    #print temp_dict
                                     if "style" in temp_dict.keys():
-                                        print temp_dict["name"],temp_dict["style"]["colour"]
+                                        #print temp_dict["name"],temp_dict["style"]["colour"]
                                         colourlookup[temp_dict["name"]]=hex2rgb(temp_dict["style"]["colour"].lstrip('#'))
-                                        #if temp_dict["name"] == "unavailable":
-                                        #    print "GOT UNAVAILABLE"
-                                        #    colourlookup[temp_dict["name"]]=(124,64,64)
-                                        #if temp_dict["name"] == "inrange":
-                                        #    print "GOT INRANGE"
-                                        #    colourlookup[temp_dict["name"]]=(0,124,124)
-                                        print hex2rgb(temp_dict["style"]["colour"].lstrip('#'))
+                                        #print hex2rgb(temp_dict["style"]["colour"].lstrip('#'))
                                     else:
                                         colourlookup[temp_dict["name"]]=hex2rgb("000000")
-                                print colourlookup
+                                #print colourlookup
                                 lights=True
                                 minIONdict[minION]["channelstuff"]=results["result"]["channel_states"]
-
-                                #sys.exit()
                             except Exception, err:
                                 print "Connection failed", err
                             minIONclassdict[minION]["connected"]="True"
+
                     except:
                         print "Connection Error"
+                    try:
+                        #print "GETTTING THE GOOD STUFF"
+                        results = execute_command_as_string(commands('get_analysis_configuration'), ipadd,minIONdict[minION]["port"])
+                        #print results["result"]["channel_states"]
+                        for thing in results["result"]["channel_states"]:
+                            temp_dict = results["result"]["channel_states"][thing]
+                        #    print temp_dict
+                            if "style" in temp_dict.keys():
+                        #        print temp_dict["name"],temp_dict["style"]["colour"]
+                                colourlookup[temp_dict["name"]]=hex2rgb(temp_dict["style"]["colour"].lstrip('#'))
+                        #        print hex2rgb(temp_dict["style"]["colour"].lstrip('#'))
+                            else:
+                                colourlookup[temp_dict["name"]]=hex2rgb("000000")
+                        #print colourlookup
+                        lights=True
+                        minIONdict[minION]["channelstuff"]=results["result"]["channel_states"]
+                    except:
+                        print "Ho Hum"
                 else:
                     inactive += 1
             time.sleep(5)
