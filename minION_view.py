@@ -67,6 +67,14 @@ parser.add(
     dest='verbose',
     )
 parser.add(
+    '-r',
+    '--ratio',
+    action='store_true',
+    help='This option prints the ratio of in strand to available.',
+    default=False,
+    dest='ratio',
+    )
+parser.add(
     '-n',
     '--no_lights',
     action='store_true',
@@ -448,11 +456,19 @@ class ThreadingExample(object):
         """ Method that runs forever """
         while True:
             if self.showlight is True:
-                self.flash_state_summary()
+                if args.ratio is False:
+                    self.flash_state_summary()
+                else:
+                    self.ratio_summary()
             print self.get_state_summary()
             print time.time()
             time.sleep(0.1)
             pass
+
+    def ratio_summary(self):
+        summary = get_state_summary()
+        write_text_inst(str(summary))
+
 
     def flash_state_summary(self):
         for key,value in self.channel_data.items():
@@ -490,6 +506,15 @@ class ThreadingExample(object):
             self.matrix.SetPixel(x,y,r,g,b)
         else:
             print "would do:",x,y,r,g,b
+
+    def write_text_inst(self,message,colour):
+        if args.nolights is False:
+            image = Image.new("1",(320,200))
+            image = image.convert("RGBA")
+            draw = ImageDraw.Draw(image)
+            draw.text((0,0),message,font=self.font,fill=color)
+            self.matrix.Clear()
+            self.matrix.SetImage(image.im.id,1,0)
 
     def write_text(self,message,color,showtime):
         if args.nolights is False:
