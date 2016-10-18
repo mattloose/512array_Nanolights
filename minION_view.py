@@ -568,6 +568,7 @@ if __name__ == '__main__':
     except Exception, err:
         print "Error",err
         print "We guess you have not got minKNOW running on your computer at the ip address specified. Please try again."
+        example.showlight=False
         example.write_text("Bye Bye!","red",3)
         print "bye bye"
         sys.exit()
@@ -639,6 +640,7 @@ if __name__ == '__main__':
             time.sleep(5)
     except (KeyboardInterrupt,Exception) as err:
         print "ctrl-c detected at top level",err
+        example.showlight = False
         example.write_text("Bye Bye!","red",3)
         print "bye bye"
         sys.exit()
