@@ -327,7 +327,7 @@ class DummyClient(WebSocketClient):
         if not m.is_binary:
             #print "****************** Non binary message"
             ##print type(m)
-            print m
+            if args.verbose is True: print m
             json_object = json.loads(str(m))
             for element in json_object:
                 if element == "channel_info" and json_object[element] != "null":
