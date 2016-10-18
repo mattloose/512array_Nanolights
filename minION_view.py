@@ -466,8 +466,8 @@ class ThreadingExample(object):
             pass
 
     def ratio_summary(self):
-        summary = get_state_summary()
-        write_text_inst(str(summary))
+        summary = self.get_state_summary()
+        self.write_text_inst(str(summary),"blue")
 
 
     def flash_state_summary(self):
@@ -507,7 +507,7 @@ class ThreadingExample(object):
         else:
             print "would do:",x,y,r,g,b
 
-    def write_text_inst(self,message,colour):
+    def write_text_inst(self,message,color):
         if args.nolights is False:
             image = Image.new("1",(320,200))
             image = image.convert("RGBA")
