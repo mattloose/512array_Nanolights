@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
+from __future__ import division
 import sys
 import os
 import re
@@ -21,6 +21,7 @@ import platform
 import random
 import struct
 import hashlib
+
 
 # Unbuffered IO
 # sys.stdin = os.fdopen(sys.stdin.fileno(), 'w', 0) # MS
@@ -460,14 +461,28 @@ class ThreadingExample(object):
                     self.flash_state_summary()
                 else:
                     self.ratio_summary()
-            print self.get_state_summary()
-            print time.time()
-            time.sleep(0.1)
+            #if args.verbose is True:
+            if args.verbose is True: print self.get_state_summary()
+            if args.verbose is True: print time.time()
+            time.sleep(0.5)
             pass
 
     def ratio_summary(self):
         summary = self.get_state_summary()
-        self.write_text_inst(str(summary),"blue")
+        strand = 0
+        single = 0
+        if "strand" in summary.keys():
+            strand = int(summary["strand"])
+        if "good_single" in summary.keys():
+            single = int(summary["good_single"])
+            print "Seen Good Single", single
+        total = strand+single
+        if strand == 0:
+            percentage = 0
+        else:
+            percentage = (total/strand)*100
+        print total, "%.1f" % percentage, "%"
+        #self.write_text_inst(str(summary),"blue")
 
 
     def flash_state_summary(self):
@@ -505,7 +520,8 @@ class ThreadingExample(object):
         if args.nolights is False:
             self.matrix.SetPixel(x,y,r,g,b)
         else:
-            print "would do:",x,y,r,g,b
+            if args.verbose is True:
+                print "would do:",x,y,r,g,b
 
     def write_text_inst(self,message,color):
         if args.nolights is False:
@@ -580,13 +596,14 @@ if __name__ == '__main__':
     minIONclassdict=dict()
     statedict=dict()
     statesummarydict=dict()
-    minwsip = "ws://"+ args.ip + ":9500/"
+    minwsip = "ws://"+ args.ip + ":9501/"
     example = ThreadingExample()
 
 
     global lights
     lights = False
     global helper
+    print minwsip
     helper = HelpTheMinion(minwsip)
     try:
         helper.connect()
