@@ -596,7 +596,7 @@ if __name__ == '__main__':
     minIONclassdict=dict()
     statedict=dict()
     statesummarydict=dict()
-    minwsip = "ws://"+ args.ip + ":9501/"
+    minwsip = "ws://"+ args.ip + ":9500/"
     example = ThreadingExample()
 
 
