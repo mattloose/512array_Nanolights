@@ -370,7 +370,7 @@ class DummyClient(WebSocketClient):
                             #    print "no state"
                             (x,y) = chanlookup[int(thing["name"])]
                             example.logitem(int(thing["name"]),state)
-                            example.point(x,y,r,g,b)
+                            #example.point(x,y,r,g,b)
                     for element2 in json_object[element]:
                         if json_object[element][element2] != "null":
                             if element not in self.detailsdict:
@@ -449,22 +449,35 @@ class ThreadingExample(object):
         if args.nolights is False: self.matrix = Adafruit_RGBmatrix(16, 1)
         # use a bitmap font
         if args.nolights is False: self.font = ImageFont.load("rpi-rgb-led-matrix/fonts/4x6.pil")
+        if args.nolights is False: self.font2 = ImageFont.load("rpi-rgb-led-matrix/fonts/5x7.pil")
         thread = threading.Thread(target=self.run, args=())
         thread.daemon = True                            # Daemonize thread
         thread.start()                                  # Start the execution
 
     def run(self):
         """ Method that runs forever """
+        counter = 0
+        switchval = 1
         while True:
             if self.showlight is True:
                 if args.ratio is False:
                     self.flash_state_summary()
                 else:
-                    self.ratio_summary()
+                    if switchval == 1:
+                        self.ratio_summary()
+                    else:
+                        self.flash_state_summary()
             #if args.verbose is True:
             if args.verbose is True: print self.get_state_summary()
             if args.verbose is True: print time.time()
             time.sleep(0.5)
+            counter+=1
+            if (counter/switchval) >= 20:
+                if switchval == 1:
+                    switchval = 2
+                else:
+                    switchval = 1
+                counter = 0
             pass
 
     def ratio_summary(self):
@@ -480,9 +493,25 @@ class ThreadingExample(object):
         if strand == 0:
             percentage = 0
         else:
-            percentage = (total/strand)*100
-        print total, "%.1f" % percentage, "%"
-        #self.write_text_inst(str(summary),"blue")
+            percentage = (strand/total)*100
+        perc = "%.1f" % percentage
+        texttowrite1=str(strand)+"/"+str(total)
+        texttowrite2=str(perc)+ "%"
+        color1 = "blue"
+        color2 = "blue"
+        if perc<=90.0: color2="red"
+        if strand<=256:color1="red"
+        self.write_text_inst_two(str(texttowrite1),color1,str(texttowrite2),color2)
+
+    def write_text_inst_two(self,message1,color1,message2,color2):
+        if args.nolights is False:
+            image = Image.new("1",(320,200))
+            image = image.convert("RGBA")
+            draw = ImageDraw.Draw(image)
+            draw.text((0,0),message1,font=self.font,fill=color1)
+            draw.text((0,9),message2,font=self.font2,fill=color2)
+            self.matrix.Clear()
+            self.matrix.SetImage(image.im.id,1,0)
 
 
     def flash_state_summary(self):
@@ -636,9 +665,9 @@ if __name__ == '__main__':
                             try:
                             #if 1:
                                 minIONclassdict[minION]["class"].connect()
-                                #print "GETTTING THE GOOD STUFF"
+                                print "GETTTING THE GOOD STUFF"
                                 results = execute_command_as_string(commands('get_analysis_configuration'), ipadd,minIONdict[minION]["port"])
-                                #print results["result"]["channel_states"]
+                                #print results
                                 for thing in results["result"]["channel_states"]:
                                     temp_dict = results["result"]["channel_states"][thing]
                                     #print temp_dict
@@ -655,6 +684,12 @@ if __name__ == '__main__':
                                 minIONdict[minION]["channelstuff"]=results["result"]["channel_states"]
                             except Exception, err:
                                 print "Connection failed", err
+                            try:
+                                results = execute_command_as_string(commands('initialization_status'), ipadd,minIONdict[minION]["port"])
+                                print results
+                            except Exception, err:
+                                print "Connection failed", err
+
                             minIONclassdict[minION]["connected"]="True"
 
                     except:
@@ -677,6 +712,11 @@ if __name__ == '__main__':
                         minIONdict[minION]["channelstuff"]=results["result"]["channel_states"]
                     except:
                         print "Ho Hum"
+                    try:
+                        results = execute_command_as_string(commands('initialization_status'), ipadd,minIONdict[minION]["port"])
+                        print results
+                    except Exception, err:
+                        print "Connection failed", err
                 else:
                     inactive += 1
             time.sleep(5)
