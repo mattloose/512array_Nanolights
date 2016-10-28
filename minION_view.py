@@ -335,13 +335,15 @@ class DummyClient(WebSocketClient):
     def received_message(self, m):
         if not m.is_binary:
             #print "****************** Non binary message"
-            print type(m)
-            print m
+            #print type(m)
+            #print m
             if args.verbose is True: print m
             json_object = json.loads(str(m))
             for element in json_object:
                 if element == "channel_info" and json_object[element] != "null":
                     #print "CHANNELINFO",json_object[element]
+                    for thing in json_object[element].keys():
+                        print thing
                     if "channels" in json_object[element].keys():
                         #if "state_group" in json_object[element]["channels"].keys():
                         for thing in json_object[element]["channels"]:
