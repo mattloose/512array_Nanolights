@@ -340,12 +340,11 @@ class DummyClient(WebSocketClient):
             if args.verbose is True: print m
             json_object = json.loads(str(m))
             for element in json_object:
-                if element == "channel_info" and json_object[element] != "null":
+		if element == "statistics" and json_object[element] != "null":
+		    if "read_event_count_weighted_hist" in json_object[element].keys():
+			print len(json_object[element]["read_event_count_weighted_hist"])
+		if element == "channel_info" and json_object[element] != "null":
                     #print "CHANNELINFO",json_object[element]
-                    if "statistics" in json_object[element].keys():
-                        print "YAY"
-                        for thing in json_object[element]["statistics"]:
-                            print thing
                     if "channels" in json_object[element].keys():
                         #if "state_group" in json_object[element]["channels"].keys():
                         for thing in json_object[element]["channels"]:
@@ -470,6 +469,8 @@ class ThreadingExample(object):
                 else:
                     if switchval == 1:
                         self.ratio_summary()
+		    elif switchval == 2:
+			pass
                     else:
                         self.flash_state_summary()
             #if args.verbose is True:
@@ -480,7 +481,9 @@ class ThreadingExample(object):
             if (counter/switchval) >= 20:
                 if switchval == 1:
                     switchval = 2
-                else:
+                elif switchval == 2:
+		    switchval = 3
+		else
                     switchval = 1
                 counter = 0
             pass
