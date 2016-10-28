@@ -343,6 +343,7 @@ class DummyClient(WebSocketClient):
                 if element == "channel_info" and json_object[element] != "null":
                     #print "CHANNELINFO",json_object[element]
                     if "statistics" in json_object[element].keys():
+                        print "YAY"
                         for thing in json_object[element]["statistics"]:
                             print thing
                     if "channels" in json_object[element].keys():
