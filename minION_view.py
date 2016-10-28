@@ -482,8 +482,8 @@ class ThreadingExample(object):
                 if switchval == 1:
                     switchval = 2
                 elif switchval == 2:
-		    switchval = 3
-		else
+                    switchval = 3
+                else
                     switchval = 1
                 counter = 0
             pass
