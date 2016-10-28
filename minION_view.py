@@ -344,6 +344,8 @@ class DummyClient(WebSocketClient):
                     #print "CHANNELINFO",json_object[element]
                     for thing in json_object[element].keys():
                         print thing
+                        for bit in json_object[element][thing].keys:
+                            print bit
                     if "channels" in json_object[element].keys():
                         #if "state_group" in json_object[element]["channels"].keys():
                         for thing in json_object[element]["channels"]:
