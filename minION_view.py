@@ -83,6 +83,14 @@ parser.add(
     default=False,
     dest='nolights',
 )
+parser.add(
+    '-b',
+    '--brightness',
+    action='store_true',
+    help='Halves brightness for comfort!',
+    default=False,
+    dest='brightness',
+)
 
 args = parser.parse_args()
 
@@ -309,6 +317,24 @@ class HelpTheMinion(WebSocketClient):
                     minIONdict[thing[1:8]]["ws_event_sampler_port"]=""
                     minIONdict[thing[1:8]]["ws_raw_data_sampler_port"]=""
 
+def proc_hist_3(histogram):
+    binlist=list()
+    for i in range(1,28):
+        j = i*3 - 2
+        if j <= 78:
+            binlist.append(histogram[j-1]+histogram[j]+histogram[j+1])
+        else:
+            binlist.append(histogram[j-1]+histogram[j])
+    return  binlist
+
+def scale16(hist):
+    maxval = max(hist)
+    scalehist=list()
+    for i in hist:
+        scalehist.append(int((i/maxval)*16))
+    return scalehist
+
+
 class DummyClient(WebSocketClient):
     #infodict = {}
 
@@ -340,10 +366,12 @@ class DummyClient(WebSocketClient):
             if args.verbose is True: print m
             json_object = json.loads(str(m))
             for element in json_object:
-		if element == "statistics" and json_object[element] != "null":
-		    if "read_event_count_weighted_hist" in json_object[element].keys():
-			print len(json_object[element]["read_event_count_weighted_hist"])
-		if element == "channel_info" and json_object[element] != "null":
+                if element == "statistics" and json_object[element] != "null":
+                    if "read_event_count_weighted_hist" in json_object[element].keys():
+                        #print len(json_object[element]["read_event_count_weighted_hist"])
+                        example.histogram_data = json_object[element]["read_event_count_weighted_hist"]
+                        #scale16(proc_hist(json_object[element]["read_event_count_weighted_hist"]))
+                if element == "channel_info" and json_object[element] != "null":
                     #print "CHANNELINFO",json_object[element]
                     if "channels" in json_object[element].keys():
                         #if "state_group" in json_object[element]["channels"].keys():
@@ -446,6 +474,7 @@ class ThreadingExample(object):
         """
         self.interval = interval
         self.channel_data = dict()
+        self.histogram_data = list()
         self.showlight = False
         for i in chanlookup:
             self.channel_data[i]=dict()
@@ -469,8 +498,8 @@ class ThreadingExample(object):
                 else:
                     if switchval == 1:
                         self.ratio_summary()
-		    elif switchval == 2:
-			pass
+                    elif switchval == 2:
+                        self.histogram_summary()
                     else:
                         self.flash_state_summary()
             #if args.verbose is True:
@@ -487,6 +516,20 @@ class ThreadingExample(object):
                     switchval = 1
                 counter = 0
             pass
+
+    def histogram_summary(self):
+        if args.nolights is False:
+            scaled_hist = scale16(proc_hist_3(self.histogram_data))
+            self.matrix.Clear()
+            for idx, val in enumerate(scaled_hist):
+                #print(idx, val)
+                for i in range(15):
+                    if i+1 <= val:
+                        self.point(idx,16-(i+1),50,50,200)
+                    else:
+                        self.point(idx,16-(i+1),0,0,0)
+
+
 
     def ratio_summary(self):
         summary = self.get_state_summary()
@@ -555,7 +598,10 @@ class ThreadingExample(object):
 
     def point(self,x,y,r,g,b):
         if args.nolights is False:
-            self.matrix.SetPixel(x,y,r,g,b)
+            if args.brightness is True:
+                self.matrix.SetPixel(x,y,int(r/3),int(g/3),int(b/3))
+            else:
+                self.matrix.SetPixel(x,y,r,g,b)
         else:
             if args.verbose is True:
                 print "would do:",x,y,r,g,b
