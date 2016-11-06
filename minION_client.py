@@ -60,6 +60,15 @@ parser.add(
     help='The IP address of the minKNOW machine.',
     )
 parser.add(
+    '-ip2',
+    '--ip2-address',
+    type=str,
+    dest='ip2',
+    required=True,
+    default=None,
+    help='The IP address of the LED controlling raspberry pi.',
+    )
+parser.add(
     '-v',
     '--verbose',
     action='store_true',
@@ -688,7 +697,7 @@ if __name__ == '__main__':
     minwsip = "ws://"+ args.ip + ":9500/"
     example = ThreadingExample()
     global callinghome
-    basenumber = "ws://"+ args.ip + ":8081/"
+    basenumber = "ws://"+ args.ip2 + ":8081/"
     callinghome = ConnectToBase(basenumber)
     try:
         callinghome.connect()
