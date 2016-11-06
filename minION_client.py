@@ -381,7 +381,7 @@ class DummyClient(WebSocketClient):
         message = dict()
         message["fromminknow"]=message_object
 
-        print message_object
+        #print message_object
         callinghome.send(json.dumps(message))
         if not m.is_binary:
             #print "****************** Non binary message"
@@ -756,6 +756,13 @@ if __name__ == '__main__':
                                 minIONclassdict[minION]["class"].connect()
                                 print "GETTTING THE GOOD STUFF"
                                 results = execute_command_as_string(commands('get_analysis_configuration'), ipadd,minIONdict[minION]["port"])
+                                print type(results)
+                                #sys.exit()
+
+                                message = dict()
+                                message["goodstuff"]=results
+
+                                callinghome.send(json.dumps(message))
                                 #print results
                                 for thing in results["result"]["channel_states"]:
                                     temp_dict = results["result"]["channel_states"][thing]
@@ -786,6 +793,11 @@ if __name__ == '__main__':
                     try:
                         #print "GETTTING THE GOOD STUFF"
                         results = execute_command_as_string(commands('get_analysis_configuration'), ipadd,minIONdict[minION]["port"])
+                        print type(results)
+                        message = dict()
+                        message["goodstuff"]=results
+
+                        callinghome.send(json.dumps(message))
                         #print results["result"]["channel_states"]
                         for thing in results["result"]["channel_states"]:
                             temp_dict = results["result"]["channel_states"][thing]
@@ -799,7 +811,8 @@ if __name__ == '__main__':
                         #print colourlookup
                         lights=True
                         minIONdict[minION]["channelstuff"]=results["result"]["channel_states"]
-                    except:
+                    except Exception,e:
+                        print str(e)
                         print "Ho Hum"
                     try:
                         results = execute_command_as_string(commands('initialization_status'), ipadd,minIONdict[minION]["port"])
