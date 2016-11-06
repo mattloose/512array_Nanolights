@@ -319,13 +319,16 @@ class HelpTheMinion(WebSocketClient):
 
 def proc_hist_3(histogram):
     binlist=list()
-    for i in range(1,28):
-        j = i*3 - 2
-        if j <= 78:
-            binlist.append(histogram[j-1]+histogram[j]+histogram[j+1])
-        else:
-            binlist.append(histogram[j-1]+histogram[j])
-    return  binlist
+    try:
+        for i in range(1,28):
+            j = i*3 - 2
+            if j <= 78:
+                binlist.append(histogram[j-1]+histogram[j]+histogram[j+1])
+            else:
+                binlist.append(histogram[j-1]+histogram[j])
+        return  binlist
+    except:
+        return binlist
 
 def scale16(hist):
     maxval = max(hist)
@@ -336,6 +339,7 @@ def scale16(hist):
         return scalehist
     else:
         return hist
+
 
 
 class DummyClient(WebSocketClient):
