@@ -376,11 +376,18 @@ class DummyClient(WebSocketClient):
         print "Closed down", code, reason
 
     def received_message(self, m):
-        callinghome.send(m)
+        print type(m)
+        message_object = json.loads(str(m))
+        message = dict()
+        message["fromminknow"]=message_object
+
+        print message_object
+        callinghome.send(json.dumps(message))
         if not m.is_binary:
             #print "****************** Non binary message"
             #print type(m)
             #print m
+
             if args.verbose is True: print m
             json_object = json.loads(str(m))
             for element in json_object:

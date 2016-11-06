@@ -699,51 +699,54 @@ class BroadcastWebSocket2(EchoWebSocket):
             #print m
             if args.verbose is True: print m
             json_object = json.loads(str(m))
-            for element in json_object:
-                if element == "statistics" and json_object[element] != "null":
-                    if "read_event_count_weighted_hist" in json_object[element].keys():
-                        #print len(json_object[element]["read_event_count_weighted_hist"])
-                        example.histogram_data = json_object[element]["read_event_count_weighted_hist"]
-                        #scale16(proc_hist(json_object[element]["read_event_count_weighted_hist"]))
-                if element == "channel_info" and json_object[element] != "null":
-                    #print "CHANNELINFO",json_object[element]
-                    if "channels" in json_object[element].keys():
-                        #if "state_group" in json_object[element]["channels"].keys():
-                        for thing in json_object[element]["channels"]:
-                            #print "****Channel*****"
-                            (r,g,b) = (0,0,0)
-                            #print colourlookup
-                            state = "unknown"
-                            if "state" in thing.keys():
-                                state = thing["state"]
-                                #print thing["state"],thing["state_group"],thing["name"],getx(int(thing["name"])),gety(int(thing["name"]))
-                                try:
-                                    #print thing
-                                    (r,g,b) =  colourlookup[thing["state"]]
-                                except:
-                                    #print "not found",thing["state"]
-                                    #print colourlookup
-                                    state="undefined"
+            for thing in json_object:
+                if thing == "fromminknow":
+                    json_object=json_object[thing]
+                    for element in json_object:
+                        if element == "statistics" and json_object[element] != "null":
+                            if "read_event_count_weighted_hist" in json_object[element].keys():
+                                #print len(json_object[element]["read_event_count_weighted_hist"])
+                                example.histogram_data = json_object[element]["read_event_count_weighted_hist"]
+                                #scale16(proc_hist(json_object[element]["read_event_count_weighted_hist"]))
+                        if element == "channel_info" and json_object[element] != "null":
+                            #print "CHANNELINFO",json_object[element]
+                            if "channels" in json_object[element].keys():
+                                #if "state_group" in json_object[element]["channels"].keys():
+                                for thing in json_object[element]["channels"]:
+                                    #print "****Channel*****"
                                     (r,g,b) = (0,0,0)
-                                #print thing,r,g,b
-                            #elif "201" in thing.keys():
-                            #    print "################################ NEW CHANNEL DESCRIPTORS?"
-                            #    print thing
-                            #else:
-                            #    print "!!!!!!!!!!!!!Different data type seen"
-                            #    print thing
-                            #except:
-                            #    print "no state"
-                            (x,y) = chanlookup[int(thing["name"])]
-                            example.logitem(int(thing["name"]),state)
-                            #example.point(x,y,r,g,b)
-                    for element2 in json_object[element]:
-                        if json_object[element][element2] != "null":
-                            if element not in self.detailsdict:
-                                self.detailsdict[element]=dict()
-                                #print type(json_object[element][element2])
-                            if json_object[element][element2] is not dict:
-                                self.detailsdict[element][element2]=json_object[element][element2]
+                                    #print colourlookup
+                                    state = "unknown"
+                                    if "state" in thing.keys():
+                                        state = thing["state"]
+                                        #print thing["state"],thing["state_group"],thing["name"],getx(int(thing["name"])),gety(int(thing["name"]))
+                                        try:
+                                            #print thing
+                                            (r,g,b) =  colourlookup[thing["state"]]
+                                        except:
+                                            #print "not found",thing["state"]
+                                            #print colourlookup
+                                            state="undefined"
+                                            (r,g,b) = (0,0,0)
+                                        #print thing,r,g,b
+                                    #elif "201" in thing.keys():
+                                    #    print "################################ NEW CHANNEL DESCRIPTORS?"
+                                    #    print thing
+                                    #else:
+                                    #    print "!!!!!!!!!!!!!Different data type seen"
+                                    #    print thing
+                                    #except:
+                                    #    print "no state"
+                                    (x,y) = chanlookup[int(thing["name"])]
+                                    example.logitem(int(thing["name"]),state)
+                                    #example.point(x,y,r,g,b)
+                            for element2 in json_object[element]:
+                                if json_object[element][element2] != "null":
+                                    if element not in self.detailsdict:
+                                        self.detailsdict[element]=dict()
+                                        #print type(json_object[element][element2])
+                                    if json_object[element][element2] is not dict:
+                                        self.detailsdict[element][element2]=json_object[element][element2]
 
 
 if __name__ == '__main__':
