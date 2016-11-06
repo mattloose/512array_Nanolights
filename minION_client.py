@@ -1,10 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from __future__ import division
-from wsgiref.simple_server import make_server
-from ws4py.websocket import EchoWebSocket
-from ws4py.server.wsgirefserver import WSGIServer, WebSocketWSGIRequestHandler
-from ws4py.server.wsgiutils import WebSocketWSGIApplication
 import sys
 import os
 import re
@@ -268,7 +264,9 @@ def commands(command):
     }[command]
 
 
-
+class ConnectToBase(WebSocketClient):
+    def opened(self):
+        print "Connected to Home"
 
 
 class HelpTheMinion(WebSocketClient):
@@ -366,6 +364,7 @@ class DummyClient(WebSocketClient):
         print "Closed down", code, reason
 
     def received_message(self, m):
+        callinghome.send(m)
         if not m.is_binary:
             #print "****************** Non binary message"
             #print type(m)
@@ -666,78 +665,7 @@ def gety(value):
     yval=(15 - ag38)
     return yval
 
-class BroadcastWebSocket(EchoWebSocket):
-    def __init__(self, *args,**kwargs):
-        super(BroadcastWebSocket, self).__init__(*args,**kwargs)
-        print "Client established!"
-        self.detailsdict=dict()
-        self.daemon=True
 
-    def opened(self):
-        print "Hello Sausage!"
-        self.send("Connection Made")
-        example.write_text("Connect!","white",3)
-        example.showlight = True
-        print self.peer_address
-        print self.sock
-        print self.sock.family
-        print self.sock.fileno()
-        self.holdingdict=dict()
-
-    def received_message(self, m):
-        print "message received"
-        print m
-        if not m.is_binary:
-            #print "****************** Non binary message"
-            #print type(m)
-            #print m
-            if args.verbose is True: print m
-            json_object = json.loads(str(m))
-            for element in json_object:
-                if element == "statistics" and json_object[element] != "null":
-                    if "read_event_count_weighted_hist" in json_object[element].keys():
-                        #print len(json_object[element]["read_event_count_weighted_hist"])
-                        example.histogram_data = json_object[element]["read_event_count_weighted_hist"]
-                        #scale16(proc_hist(json_object[element]["read_event_count_weighted_hist"]))
-                if element == "channel_info" and json_object[element] != "null":
-                    #print "CHANNELINFO",json_object[element]
-                    if "channels" in json_object[element].keys():
-                        #if "state_group" in json_object[element]["channels"].keys():
-                        for thing in json_object[element]["channels"]:
-                            #print "****Channel*****"
-                            (r,g,b) = (0,0,0)
-                            #print colourlookup
-                            state = "unknown"
-                            if "state" in thing.keys():
-                                state = thing["state"]
-                                #print thing["state"],thing["state_group"],thing["name"],getx(int(thing["name"])),gety(int(thing["name"]))
-                                try:
-                                    #print thing
-                                    (r,g,b) =  colourlookup[thing["state"]]
-                                except:
-                                    #print "not found",thing["state"]
-                                    #print colourlookup
-                                    state="undefined"
-                                    (r,g,b) = (0,0,0)
-                                #print thing,r,g,b
-                            #elif "201" in thing.keys():
-                            #    print "################################ NEW CHANNEL DESCRIPTORS?"
-                            #    print thing
-                            #else:
-                            #    print "!!!!!!!!!!!!!Different data type seen"
-                            #    print thing
-                            #except:
-                            #    print "no state"
-                            (x,y) = chanlookup[int(thing["name"])]
-                            example.logitem(int(thing["name"]),state)
-                            #example.point(x,y,r,g,b)
-                    for element2 in json_object[element]:
-                        if json_object[element][element2] != "null":
-                            if element not in self.detailsdict:
-                                self.detailsdict[element]=dict()
-                                #print type(json_object[element][element2])
-                            if json_object[element][element2] is not dict:
-                                self.detailsdict[element][element2]=json_object[element][element2]
 
 
 if __name__ == '__main__':
@@ -749,7 +677,7 @@ if __name__ == '__main__':
     global minIONclassdict
     global statedict
     global statesummarydict
-    global example
+    #global example
     global colourlookup
     colourlookup=dict()
     minIONdict=dict()
@@ -759,32 +687,18 @@ if __name__ == '__main__':
     statesummarydict=dict()
     minwsip = "ws://"+ args.ip + ":9500/"
     example = ThreadingExample()
+    global callinghome
+    basenumber = "ws://"+ args.ip + ":8081/"
+    callinghome = ConnectToBase(basenumber)
+    try:
+        callinghome.connect()
+    except Exception, err:
+        print "Error",err
+        print "Can't phone home. Please try again."
+
+
     global lights
     lights = False
-    print "yeeha"
-    server = make_server('', 8081, server_class=WSGIServer,
-                     handler_class=WebSocketWSGIRequestHandler,
-                     app=WebSocketWSGIApplication(handler_cls=BroadcastWebSocket))
-    print "awesome sauce"
-    server.initialize_websockets_manager()
-    print "chumblebyumble"
-    #example = ThreadingExample(server)
-    try:
-        server.serve_forever()
-
-        #pass
-    except (KeyboardInterrupt,Exception) as err:
-        print "ctrl-c detected at top level",err
-        print "bye bye"
-        #rt.stop()
-        server.server_close()
-
-        sys.exit()
-
-
-
-
-    """
     global helper
     print minwsip
     helper = HelpTheMinion(minwsip)
@@ -798,6 +712,8 @@ if __name__ == '__main__':
         print "bye bye"
         sys.exit()
     ringtone = 0
+
+
 
     try:
     #if 1:
@@ -880,4 +796,3 @@ if __name__ == '__main__':
         example.write_text("Bye Bye!","red",3)
         print "bye bye"
         sys.exit()
-    """
