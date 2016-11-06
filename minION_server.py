@@ -762,8 +762,8 @@ class BroadcastWebSocket2(EchoWebSocket):
                             #print hex2rgb(temp_dict["style"]["colour"].lstrip('#'))
                         else:
                             colourlookup[temp_dict["name"]]=hex2rgb("000000")
-                    lights=True
-                    minIONdict[minION]["channelstuff"]=json_object[thing]["result"]["channel_states"]
+                    #lights=True
+                    #minIONdict[minION]["channelstuff"]=json_object[thing]["result"]["channel_states"]
                 else:
                     print "UNKNOWN THING",m
 
@@ -794,7 +794,7 @@ if __name__ == '__main__':
     print "awesome sauce"
     server.initialize_websockets_manager()
     print "chumblebyumble"
-    #example = ThreadingExample(server)
+    example = ThreadingExample(server)
     try:
         server.serve_forever()
 
