@@ -682,7 +682,7 @@ class BroadcastWebSocket2(EchoWebSocket):
     def opened(self):
         print "Hello Sausage!"
         self.send("Connection Made")
-        example.write_text("Listening!","white",3)
+        example.write_text("Listen!","white",3)
         example.showlight = True
         print self.peer_address
         print self.sock
@@ -702,7 +702,7 @@ class BroadcastWebSocket2(EchoWebSocket):
             for thing in json_object:
                 if thing == "fromminknow":
                     #json_object=json_object[thing]
-		    print "got a message"
+                    print "got a message"
 #                    print json_object
                     for element in json_object[thing]:
                         if element == "statistics" and json_object[thing][element] != "null":
@@ -750,7 +750,7 @@ class BroadcastWebSocket2(EchoWebSocket):
                                     if json_object[thing][element][element2] is not dict:
                                         self.detailsdict[element][element2]=json_object[thing][element][element2]
                 else:
-		    print m
+                    print "UNKNOWN THING",m
 
 if __name__ == '__main__':
 
