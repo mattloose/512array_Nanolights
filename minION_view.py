@@ -331,15 +331,17 @@ def proc_hist_3(histogram):
         return binlist
 
 def scale16(hist):
-    maxval = max(hist)
-    scalehist=list()
-    if maxval > 0:
-        for i in hist:
-            scalehist.append(int((i/maxval)*16))
-        return scalehist
-    else:
+    try:
+        maxval = max(hist)
+        scalehist=list()
+        if maxval > 0:
+            for i in hist:
+                scalehist.append(int((i/maxval)*16))
+            return scalehist
+        else:
+            return hist
+    except:
         return hist
-
 
 
 class DummyClient(WebSocketClient):
