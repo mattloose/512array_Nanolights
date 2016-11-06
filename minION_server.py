@@ -692,7 +692,7 @@ class BroadcastWebSocket2(EchoWebSocket):
 
     def received_message(self, m):
         print "message received"
-        print m
+
         if not m.is_binary:
             #print "****************** Non binary message"
             #print type(m)
@@ -702,6 +702,7 @@ class BroadcastWebSocket2(EchoWebSocket):
             for thing in json_object:
                 if thing == "fromminknow":
                     json_object=json_object[thing]
+                    print json_object
                     for element in json_object:
                         if element == "statistics" and json_object[element] != "null":
                             if "read_event_count_weighted_hist" in json_object[element].keys():
