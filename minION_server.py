@@ -668,7 +668,7 @@ def gety(value):
 
 class BroadcastWebSocket2(EchoWebSocket):
     def __init__(self, *args,**kwargs):
-        super(BroadcastWebSocket, self).__init__(*args,**kwargs)
+        super(BroadcastWebSocket2, self).__init__(*args,**kwargs)
         print "Client established!"
         self.detailsdict=dict()
         self.daemon=True
