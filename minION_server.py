@@ -666,7 +666,7 @@ def gety(value):
     yval=(15 - ag38)
     return yval
 
-class BroadcastWebSocket(EchoWebSocket):
+class BroadcastWebSocket2(EchoWebSocket):
     def __init__(self, *args,**kwargs):
         super(BroadcastWebSocket, self).__init__(*args,**kwargs)
         print "Client established!"
@@ -676,7 +676,7 @@ class BroadcastWebSocket(EchoWebSocket):
     def opened(self):
         print "Hello Sausage!"
         self.send("Connection Made")
-        example.write_text("Connect!","white",3)
+        example.write_text("Listening!","white",3)
         example.showlight = True
         print self.peer_address
         print self.sock
@@ -764,7 +764,7 @@ if __name__ == '__main__':
     print "yeeha"
     server = make_server('', 8081, server_class=WSGIServer,
                      handler_class=WebSocketWSGIRequestHandler,
-                     app=WebSocketWSGIApplication(handler_cls=BroadcastWebSocket))
+                     app=WebSocketWSGIApplication(handler_cls=BroadcastWebSocket2))
     print "awesome sauce"
     server.initialize_websockets_manager()
     print "chumblebyumble"
