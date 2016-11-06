@@ -332,7 +332,7 @@ def proc_hist_3(histogram):
                 binlist.append(histogram[j-1]+histogram[j])
         return  binlist
     except:
-        return binlinst
+        return binlist
 
 def scale16(hist):
     maxval = max(hist)
