@@ -29,8 +29,33 @@ then:
 
 Note that the ip address is the ip of your minKNOW running computer.
 
-Currently MinKNOW MUST BE RUNNING for this to work.
+Currently MinKNOW MUST BE RUNNING before you launch this for it to work. 
 
 Also this MUST be run as sudo.
+
+For full help:
+
+	python minION_view.py -h
+	
+	usage: minION_view.py [-h] -ip IP [-v] [-r] [-n] [-b]
+
+	interaction: A program to provide real time interaction for minION runs. Args
+	that start with '--' (eg. --ip-address) can also be set in a config file
+	(/Users/mattloose/software/GIT/512array_Nanolights/minup_posix.config or ) by
+	using .ini or .yaml-style syntax (eg. ip-address=value). If an arg is
+	specified in more than one place, then command-line values override config
+	file values which override defaults.
+
+	optional arguments:
+	  -h, --help            show this help message and exit
+	  -ip IP, --ip-address IP
+	                        The IP address of the minKNOW machine.
+	  -v, --verbose         Display debugging information.
+	  -r, --ratio           This option prints the ratio of in strand to
+	                        available.
+	  -n, --no_lights       Inactivate lights for testing and development
+	                        purposes.
+	  -b, --brightness      Halves brightness for comfort!
+	
 
 
