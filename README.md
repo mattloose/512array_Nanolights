@@ -1,6 +1,8 @@
 # 512array_Nanolights
 Development code for a light interface to the ONT minION device
 
+![light box image](images/LightBox.jpg?raw=true "The Light Box")
+
 Currently only tested on a raspberry pi!
 
 To build the hardware needed go to: https://www.adafruit.com/products/2345
@@ -41,7 +43,7 @@ For full help:
 
 	interaction: A program to provide real time interaction for minION runs. Args
 	that start with '--' (eg. --ip-address) can also be set in a config file
-	(/Users/mattloose/software/GIT/512array_Nanolights/minup_posix.config or ) by
+	(/path/to/512array_Nanolights/minup_posix.config or ) by
 	using .ini or .yaml-style syntax (eg. ip-address=value). If an arg is
 	specified in more than one place, then command-line values override config
 	file values which override defaults.
