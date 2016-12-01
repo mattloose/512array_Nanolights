@@ -3,7 +3,9 @@ Development code for a light interface to the ONT minION device
 
 ![light box image](images/LightBox.jpg?raw=true "The Light Box")
 
-Currently only tested on a raspberry pi!
+Currently only tested on a raspberry pi! Your PI and the minKNOW machine must be running on the same network and need at this time to have a very open network.
+
+Suggested use case is to run on your own local network - I often set up a shared network from the laptop running minKNOW.
 
 To build the hardware needed go to: https://www.adafruit.com/products/2345
 
