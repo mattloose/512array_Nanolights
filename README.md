@@ -9,7 +9,7 @@ To build the hardware needed go to: https://www.adafruit.com/products/2345
 
 A guide to assembling the hardware is here: https://learn.adafruit.com/adafruit-rgb-matrix-plus-real-time-clock-hat-for-raspberry-pi
 
-To build a case for this you can 3D print using the model here: 3dPrintFiles/Pi-LCD-11.stl
+To build a case for this you can 3D print using the model in the 3dPrintFiles folder.
 
 To clone repository:
 
