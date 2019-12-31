@@ -49,7 +49,7 @@ elif OPER == 'Darwin':
     OPER = 'osx'
 else:
     OPER = 'linux'  # MS
-print OPER  # MS
+print (OPER)  # MS
 
 def hex2rgb(rgb):
     return struct.unpack('BBB', rgb.decode('hex'))
@@ -168,10 +168,10 @@ def execute_command_as_string(data, host=None, port=None):
     ##print req
     try:
         f = _urlopen(req)
-    except Exception, err:
+    except Exception as err:
         err_string = \
             'Fail to initialise mincontrol. Likely reasons include minKNOW not running, the wrong IP address for the minKNOW server or firewall issues.'
-        #print err_string, err
+        #print (err_string, err)
     json_respond = json.loads(f.read())
     f.close()
     return json_respond
