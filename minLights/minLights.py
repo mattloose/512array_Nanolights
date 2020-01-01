@@ -587,7 +587,7 @@ class MinknowConnectRPC():
                     self.minIONdict[deviceid]["insecure_web"] = device.ports.insecure_web
                     log.debug(self.minIONdict[deviceid]["grpc_port"])
                     self.minIONdict[deviceid]["grpc_connection"] = rpc.Connection(
-                        port=self.minIONdict[deviceid]["grpc_port"])
+                        port=self.minIONdict[deviceid]["grpc_port"], host = self.args.host)
 
                     self.minIONdict[deviceid]["device_connection"] = DeviceConnect(self.args,
                                                                                    self.minIONdict[deviceid][
