@@ -13,9 +13,17 @@ import sys
 
 # minLights imports
 
+from PIL import Image
+from PIL import ImageDraw,ImageFont
+#from samplebase import SampleBase
+
+from rgbmatrix import graphics
+
+from rgbmatrix import RGBMatrix, RGBMatrixOptions
+
 from minLights.arguments import get_parser
 from minLights.load_rpc import fetch_devices, fetch_devices_2
-from minLights.utils import print_args
+from minLights.utils import print_args, hex2rgb, rgb2hex, chanlookup
 
 import minLights.rpc as rpc
 rpc._load()
@@ -36,10 +44,11 @@ class DeviceConnect():
     #    super(DeviceConnect, self).__init__(*args,**kwargs)
         #self.detailsdict=dict()
     #    self.daemon=True
-    def __init__(self,args,rpcconnection,minIONid):
+    def __init__(self,args,rpcconnection,minIONid,mylights):
         self.args = args
         log.info("Client established!")
         self.rpc_connection=rpcconnection
+        self.mylights=mylights
 
         #Here we need to check if we are good to run against this version.
         self.version = self.rpc_connection.instance.get_version_info().minknow.full
@@ -58,7 +67,22 @@ class DeviceConnect():
             #sys.exit()
 
         self.channels = parsemessage(self.rpc_connection.device.get_flow_cell_info())['channel_count']
-        self.channelstatesdesc = self.rpc_connection.analysis_configuration.get_channel_states_desc()
+        self.channelstatesdesc = parsemessage(self.rpc_connection.analysis_configuration.get_channel_states_desc())
+        self.colourlookup = dict()
+        for key in self.channelstatesdesc:
+            for state in self.channelstatesdesc[key]:
+                for porestate in state['states']:
+                    colour = "#000000"
+                    #print (porestate)
+                    if "style" in porestate.keys():
+                        colour = porestate['style'].get('colour')
+                    #    print (porestate['style'].get('colour'))
+                    else:
+                        #print ("no colour found")
+                        colour = "#000000"
+                    if len(colour)< 1:
+                        colour = "#000000"
+                    self.colourlookup[porestate['name']]=hex2rgb(colour)
         self.channelstates = dict()
         for i in range(self.channels):
             self.channelstates[i+1]=None
@@ -112,9 +136,8 @@ class DeviceConnect():
         newhistogrammonitorthread.daemon = True
         newhistogrammonitorthread.start()
 
-        log.debug("All is well with connection.")
+        #log.debug("All is well with connection.")
         self.first_connect()
-
 
     def disconnect_nicely(self):
         log.debug("Trying to disconnect nicely")
@@ -131,7 +154,7 @@ class DeviceConnect():
         :return:
         """
         log.debug("First connection observed")
-        log.debug("All is well with connection. {}".format(self.minIONid))
+        #log.debug("All is well with connection. {}".format(self.minIONid))
         for protocol in self.rpc_connection.protocol.list_protocols().ListFields()[0][1]:
             protocoldict = self.parse_protocol(protocol)
             #print (self.minion,protocoldict)
@@ -178,21 +201,22 @@ class DeviceConnect():
         try:
             self.runinformation = self.rpc_connection.acquisition.get_current_acquisition_run()
 
-            log.debug(self.runinfo_api)
-            log.debug(self.sampleid)
-            log.debug(self.runinformation)
-            log.debug("RUNID {}".format(self.runinformation.start_time))
-            log.debug(self.channelstatesdesc)
-            log.debug(self.channels)
-            log.debug("FLOWCELL DATA {}".format(self.get_flowcell_id()))
-            log.debug("trying to create run")
+            #log.debug(self.runinfo_api)
+            #log.debug(self.sampleid)
+            #log.debug(self.runinformation)
+            #log.debug("RUNID {}".format(self.runinformation.start_time))
+            #log.debug(self.channelstatesdesc)
+            #log.debug(self.channels)
+            #log.debug("FLOWCELL DATA {}".format(self.get_flowcell_id()))
+            #log.debug("trying to create run")
             #self.create_run(self.runinformation.run_id)
-            log.debug("run created!!!!!!!")
+            #log.debug("run created!!!!!!!")
             #self.update_minion_run_info()
-            log.debug("update minion run info complete")
+            #log.debug("update minion run info complete")
 
         except Exception as err:
             log.error("Problem:", err)
+
 
 
 
@@ -229,7 +253,7 @@ class DeviceConnect():
             payload['experiment_id']="Not Known"
         '''
         payload = "camel"
-        log.debug(">>>>>>>>", payload)
+        #log.debug(">>>>>>>>", payload)
 
     def create_run(self, runid):
         log.debug(">>> inside create_run")
@@ -250,8 +274,8 @@ class DeviceConnect():
             is_barcoded = False  # TODO do we known this info at this moment? This can be determined from run info.
 
             has_fastq = True  # TODO do we known this info at this moment? This can be determined from run info
-            log.debug(">>> before self.minotourapi.create_run")
-            log.debug("self.sampleid.sample_id",self.sampleid.sample_id)
+            #log.debug(">>> before self.minotourapi.create_run")
+            #log.debug("self.sampleid.sample_id",self.sampleid.sample_id)
 
             # createrun = requests.post(self.args.full_host+'api/v1/runs/', headers=self.header, json={"run_name": self.status_summary['run_name'], "run_id": runid, "barcode": barcoded, "is_barcoded":is_barcoded, "minION":self.minion["url"]})
 
@@ -285,10 +309,10 @@ class DeviceConnect():
 
     def get_flowcell_id(self):
         if len(self.flowcelldata['user_specified_flow_cell_id']) > 0:
-            log.debug("We have a self named flowcell")
+            #log.debug("We have a self named flowcell")
             return str(self.flowcelldata['user_specified_flow_cell_id'])
         else:
-            log.debug("the flowcell id is fixed")
+            #log.debug("the flowcell id is fixed")
             return str(self.flowcelldata['flow_cell_id'])
 
 
@@ -296,9 +320,9 @@ class DeviceConnect():
         while True:
             flowcellinfo = self.rpc_connection.device.stream_flow_cell_info()
             for event in flowcellinfo:
-                log.debug(event)
+                #log.debug(event)
                 self.flowcelldata = parsemessage(event)
-                log.debug(self.get_flowcell_id())
+                #log.debug(self.get_flowcell_id())
 
     def newhistogrammonitor(self):
         while True:
@@ -311,7 +335,7 @@ class DeviceConnect():
                     if not str(self.status).startswith("status: PROCESSING"):
                         break
             except Exception as e:
-                print ("Histogram Problem: {}".format(e))
+                #print ("Histogram Problem: {}".format(e))
                 pass
             time.sleep(self.interval)
             pass
@@ -325,6 +349,10 @@ class DeviceConnect():
                 for state in channel_states:
                     for channel in state.channel_states:#print (state)
                         self.channelstates[int(channel.channel)]=channel.state_name
+                        #print (channel.channel, channel.state_name, chanlookup(channel.channel), self.colourlookup[channel.state_name])
+                        #(x,y) = chanlookup(channel.channel)
+                        #(r,g,b) = self.colourlookup[channel.state_name]
+                        #self.mylights.point(x,15-y,r,g,b)
                 if not str(self.status).startswith("status: PROCESSING"):
                     break
             except:
@@ -335,9 +363,9 @@ class DeviceConnect():
     def dutytimemonitor(self):
         while True:
             log.debug("Duty Time Monitor Running", self.status)
-            log.debug(str(self.status))
+            #log.debug(str(self.status))
             while str(self.status).startswith("status: PROCESSING"):
-                log.debug("fetching duty time")
+                #log.debug("fetching duty time")
                 dutytime = self.rpc_connection.statistics.stream_duty_time(wait_for_processing=True,step=60)
                 if self.args.verbose:
                     for duty in dutytime:
@@ -351,13 +379,13 @@ class DeviceConnect():
             msgs = rpc.acquisition_service
             while True:
                 for status in status_watcher.wait():
-                    log.info(status)
+                    #log.info(status)
                     self.status = status
                     if str(self.status).startswith("status: STARTING"):
                         self.run_start()
                     if str(self.status).startswith("status: FINISHING"):
                         self.run_stop()
-                    log.debug(status)
+                    #log.debug(status)
 
     def update_minion_status(self):
         #### This block of code will update live information about a minION
@@ -376,47 +404,8 @@ class DeviceConnect():
             self.disk_space_info = json.loads(
                 MessageToJson(self.rpc_connection.instance.get_disk_space_info(), preserving_proto_field_name=True,
                               including_default_value_fields=True))
-            log.debug(self.disk_space_info)
+            #log.debug(self.disk_space_info)
 
-        '''
-        payload = {"minION": str(self.minion["url"]),
-                   "minKNOW_status": acquisition_data['state'],
-                   "minKNOW_current_script": currentscript,
-                   #"minKNOW_sample_name": None,
-                   "minKNOW_exp_script_purpose": str(self.rpc_connection.protocol.get_protocol_purpose()),
-                   "minKNOW_flow_cell_id": self.get_flowcell_id(),
-                   #"minKNOW_run_name": str(self.sampleid.sample_id),
-                   #"minKNOW_hash_run_id": str(self.runinformation.run_id),
-                   #"minKNOW_script_run_id": str(
-                   #    self.rpc_connection.protocol.get_current_protocol_run().acquisition_run_ids[0]),
-                   "minKNOW_real_sample_rate": int(
-                       str(self.rpc_connection.device.get_sample_rate().sample_rate)),
-                   "minKNOW_asic_id": self.flowcelldata['asic_id'],  # self.status_summary['asic_id'],
-                   "minKNOW_total_drive_space": self.disk_space_info["filesystem_disk_space_info"][0]["bytes_capacity"],
-                   "minKNOW_disk_space_till_shutdown": self.disk_space_info["filesystem_disk_space_info"][0]["bytes_when_alert_issued"],
-                   "minKNOW_disk_available": self.disk_space_info["filesystem_disk_space_info"][0]["bytes_available"],
-                   "minKNOW_warnings": self.disk_space_info["filesystem_disk_space_info"][0]["recommend_stop"],
-                   # TODO work out what this should be! self.status_summary['recommend_alert'],
-                   }
-        try:
-            payload["minKNOW_script_run_id"] = self.rpc_connection.protocol.get_current_protocol_run().acquisition_run_ids[0]
-        except:
-            pass
-        if hasattr(self, 'sampleid'):
-            payload["minKNOW_sample_name"]=str(self.sampleid.sample_id)
-            payload["minKNOW_run_name"]=str(self.sampleid.sample_id)
-
-        if hasattr(self, 'runinformation'):
-            payload["minKNOW_hash_run_id"]=str(self.runinformation.run_id)
-
-#        if self.minIONstatus:  # i.e the minION status already exists
-
-#            self.minIONstatus = self.minotourapi.update_minion_status(payload, self.minion)
-
- #       else:
-
- #           self.minIONstatus = self.minotourapi.create_minion_status(payload, self.minion)
-'''
 
     def get_channel_states(self):
         return self.channelstates
@@ -438,9 +427,9 @@ class DeviceConnect():
         try:
             channelpandastates = channelpanda.groupby([0,]).size()
             #print (channelpandastates)
-            log.debug(channelpandastates)
+            #log.debug(channelpandastates)
             for state, value in channelpandastates.iteritems():
-                log.debug(state, value)
+                #log.debug(state, value)
             #    print (state,value)
                 channeldict[state]=value
             #print ("\n\n\n\n\n\n")
@@ -453,43 +442,16 @@ class DeviceConnect():
             openpore=0
             pass
 
-        # Capturing the histogram data from MinKNOW
-        #print (self.runinformation)
-
-        '''
-        payload = {"minION": str(self.minion["url"]),
-                   "run_id": self.runidlink,
-                   "sample_time": str(datetime.datetime.now()),
-                   "event_yield": yield_val,
-                   "asic_temp": asictemp,
-                   "heat_sink_temp": heatsinktemp,
-                   "voltage_value": voltage_value,
-                   "mean_ratio": meanratio,
-                   "open_pore": openpore,
-                   "in_strand": instrand,
-                   "minKNOW_histogram_values": str(self.histogramdata["histogram_data"]["buckets"]),
-                   "minKNOW_histogram_bin_width": self.histogramdata["histogram_data"]["width"],
-                   "minKNOW_read_count": read_count
-                   }
-        for channel in channeldict:
-            payload[str(channel)] = channeldict[channel]
-
-        log.debug("This our new payload",payload)
-
-#        result = self.minotourapi.create_minion_statistic(payload,self.runid)
-
- #       log.debug("This is our result.", result)
-        '''
 
 
 
     def runinfo(self):
         while True:
-            log.debug("Checking run info")
+            #log.debug("Checking run info")
             try:
                 self.acquisition_data = parsemessage(self.rpc_connection.acquisition.get_acquisition_info())
             except:
-                log.debug("No active run")
+                #log.debug("No active run")
                 self.acquisition_data ={}
             self.temperaturedata = self.rpc_connection.device.get_temperature()
             self.disk_space_info = json.loads(MessageToJson(self.rpc_connection.instance.get_disk_space_info(), preserving_proto_field_name=True, including_default_value_fields=True))
@@ -507,23 +469,19 @@ class DeviceConnect():
                 self.sampleid = self.rpc_connection.protocol.get_sample_id()
             except:
                 log.debug("Sample ID not yet known.")
-            log.debug("running update minion status")
+            #log.debug("running update minion status")
             self.update_minion_status()
             if str(self.status).startswith("status: PROCESSING"):
                 self.runinformation = self.rpc_connection.acquisition.get_current_acquisition_run()
-                log.debug(self.runinformation)
+                #log.debug(self.runinformation)
                 try:
-                    log.debug("running update minion stats")
+                    #log.debug("running update minion stats")
                     if hasattr(self, 'runid'):
                         self.update_minion_stats()
                 except Exception as err:
                     log.error("Problem updating stats to device.", err)
                     pass
-            try:
-                log.debug(self.read_event_weighted_hist)
-                log.debug(self.read_hist_bin_width)
-            except:
-                log.debug("Couldn't log histogram data.")
+
             time.sleep(self.interval)
 
     def sendmessage(self,severitylevel,message):
@@ -553,15 +511,75 @@ class DeviceConnect():
 
 
 class MinknowConnectRPC():
-    def __init__(self,args,ip):
+    def __init__(self,args,ip,mylights):
         self.ip = ip
         self.args = args
         log.debug("initialising minknow connection via rpc")
-        #self.header = header
+        self.mylights = mylights
         self.minIONdict=dict() #A dictionary to store minION connection data.
         devicemonitorthread = threading.Thread(target=self.devicemonitor, args=())
         devicemonitorthread.daemon = True  # Daemonize thread
         devicemonitorthread.start()
+
+        lightfunctionthread = threading.Thread(target=self.lightchecker,args=())
+        lightfunctionthread.daemon = True
+        lightfunctionthread.start()
+
+    def lightchecker(self):
+        while True:
+            #Loop through the list of MinIONs availble
+            for minION in self.minIONdict:
+                self.mylights.scrolling_write_text(minION)
+                if "device_connection" in self.minIONdict[minION].keys():
+                    self.mylights.scrolling_write_text(self.minIONdict[minION]["device_connection"].device_type,font_size=13,font_name=("minLights/fonts/7x13.bdf"))
+                    self.mylights.scrolling_write_text(self.minIONdict[minION]["device_connection"].computer_name,font_size=13,font_name=("minLights/fonts/7x13.bdf"))
+                    try:
+                        print (self.minIONdict[minION]["device_connection"].flowcelldata)
+                        for key in self.minIONdict[minION]["device_connection"].flowcelldata:
+                            #print (key)
+                            if isinstance(self.minIONdict[minION]["device_connection"].flowcelldata[key],str) and len(self.minIONdict[minION]["device_connection"].flowcelldata[key]) > 0:
+                                self.mylights.scrolling_write_text("{}".format(self.minIONdict[minION]["device_connection"].flowcelldata[key]),font_size=13,font_name=("minLights/fonts/7x13.bdf"))
+                    except Exception as err:
+                        print ("Problem: {}".format(err))
+                    #for line in self.mylights.scrolling_write_text(self.minIONdict[minION]["device_connection"].getflowcelldata()):
+                    #    self.mylights.scrolling_write_text(line)
+
+                    colourlookup = self.minIONdict[minION]["device_connection"].colourlookup
+                    now = time.time()
+                    prevchannel = dict()
+                    while 1:
+                        for channel in self.minIONdict[minION]["device_connection"].channelstates:
+                            #print (now)
+                            #print (channel,self.minIONdict[minION]["device_connection"].channelstates[channel])
+                            (x,y) = chanlookup(channel)
+                            (r,g,b) = colourlookup[self.minIONdict[minION]["device_connection"].channelstates[channel]]
+                            if prevchannel.get(channel) != self.minIONdict[minION]["device_connection"].channelstates[channel]:
+                                self.mylights.point(x,15-y,r,g,b)
+                            prevchannel[channel] = self.minIONdict[minION]["device_connection"].channelstates[channel]
+                            if time.time() > (now+60):
+                                break
+                        else:
+                            continue
+                        break
+
+                    now = time.time()
+                    print (self.minIONdict[minION]["device_connection"].histogramdata)
+                    while 1:
+                        scaled_hist = scale16(proc_hist_3(self.minIONdict[minION]["device_connection"].histogramdata['histogram_data']['buckets']))
+                        self.mylights.matrix.Clear()
+                        for idx, val in enumerate(scaled_hist):
+                            # print(idx, val)
+                            for i in range(15):
+                                if i + 1 <= val:
+                                    self.mylights.point(idx, 16 - (i + 1), 50, 50, 200)
+                                else:
+                                    self.mylights.point(idx, 16 - (i + 1), 0, 0, 0)
+                            if time.time() > (now + 10):
+                                break
+                        else:
+                            continue
+                        break
+
 
     def devicemonitor(self):
         # -------------------------------------------------------------------------------
@@ -592,12 +610,12 @@ class MinknowConnectRPC():
                     self.minIONdict[deviceid]["device_connection"] = DeviceConnect(self.args,
                                                                                    self.minIONdict[deviceid][
                                                                                        "grpc_connection"],
-                                                                                   deviceid)
+                                                                                   deviceid,self.mylights)
                     """
                     try:
                         self.minIONdict[deviceid]["device_connection"].connect()
                     except Exception as err:
-                        print ("Problem connecting to device.", err)
+                        
                         log.error("Problem connecting to device.", err)
                     """
                     self.minIONdict[deviceid]["state"]="active"
@@ -614,6 +632,120 @@ class MinknowConnectRPC():
             log.info("Disconnecting {} from the server.".format(device))
             self.minIONdict[device]["device_connection"].disconnect_nicely()
         log.info("Stopped successfully.")
+
+def scale16(hist):
+    try:
+        maxval = max(hist)
+        scalehist=list()
+        if maxval > 0:
+            for i in hist:
+                scalehist.append(int((i/maxval)*16))
+            return scalehist
+        else:
+            return hist
+    except:
+        return hist
+
+def proc_hist_3(histogram):
+    binlist=list()
+    binlength = len(histogram)
+    try:
+        for i in range(1,binlength):
+            j = i*3 - 2
+            if j <= binlength-1:
+                binlist.append(int(histogram[j-1])+int(histogram[j])+int(histogram[j+1]))
+            else:
+                binlist.append(int(histogram[j-1])+int(histogram[j]))
+        return  binlist
+    except:
+        return binlist
+
+class myLightBoard():
+    def __init__(self,args):
+        # Build our lighting device.
+        self.args=args
+        self.options = RGBMatrixOptions()
+        self.options.hardware_mapping = self.args.led_gpio_mapping
+        self.options.rows = self.args.rows_led
+        self.options.cols = self.args.cols_led
+        self.options.chain_length = self.args.led_chain
+        self.options.parallel = self.args.led_parallel
+        # self.options.row_address_type = self.args.led_row_addr_type
+        # self.options.multiplexing = self.args.led_multiplexing
+        self.options.pwm_bits = self.args.led_pwm_bits
+        self.options.brightness = self.args.led_brightness
+        self.options.pwm_lsb_nanoseconds = self.args.led_pwm_lsb_nanoseconds
+        # self.options.led_rgb_sequence = self.args.led_rgb_sequence
+        # self.options.pixel_mapper_config = self.args.led_pixel_mapper
+        if self.args.led_show_refresh:
+            self.options.show_refresh_rate = 1
+        if self.args.led_slowdown_gpio != None:
+            self.options.gpio_slowdown = self.args.led_slowdown_gpio
+        # if args.led_no_hardware_pulse:
+        #    options.disable_hardware_pulsing = True
+
+        self.matrix = RGBMatrix(options=self.options)
+        self.scrolling_write_text("Lights Connected.", speed=0.01)
+
+
+    def write_text_inst_two(self,message1,color1,message2,color2,font_name,font_name2):
+        offscreen_canvas = self.matrix.CreateFrameCanvas()
+        #color1 = graphics.Color(255, 255, 255)
+        #color2 = graphics.Color(255, 255, 255)
+        color1 = "Blue"
+        color2 = "Green"
+        #font1 = graphics.Font()
+        #font1.LoadFont("minLights/fonts/5x7.bdf")
+        font1 = ImageFont.load("minLights/fonts/4x6.pil")
+        #font2 = graphics.Font()
+        font2 = ImageFont.load("minLights/fonts/5x7.pil")
+        #pos = 16
+        #pos2 = 16
+        #offscreen_canvas.Clear()
+        #len = graphics.DrawText(offscreen_canvas,font1,pos,7,color1,message1)
+        #len = graphics.DrawText(offscreen_canvas,font2,pos2,7,color2,message2)
+        #offscreen_canvas = self.matrix.SwapOnVSync(offscreen_canvas)
+
+        image = Image.new("1", (320, 200))
+        image = image.convert("RGBA")
+        draw = ImageDraw.Draw(image)
+        x=32
+        while True:
+            draw.text((0,0), message1, font=font1, fill=color1)
+            draw.text((0, 9), message2, font=font1, fill=color2)
+            self.matrix.Clear()
+        #self.matrix.SetImage(image.convert('RGB'))
+            self.matrix.SetImage(image.convert('RGB'), x, 0)
+            x-=1
+            if x <= -320:
+                break
+            time.sleep(0.02)
+
+
+
+
+
+    def scrolling_write_text(self,text,font_size=7,font_name=("minLights/fonts/5x7.bdf"),font_colour = graphics.Color(255, 255, 255), speed = 0.025):
+        offscreen_canvas = self.matrix.CreateFrameCanvas()
+        font = graphics.Font()
+        font.LoadFont(font_name)
+        pos = offscreen_canvas.width
+        while True:
+            offscreen_canvas.Clear()
+            len = graphics.DrawText(offscreen_canvas, font, pos, font_size, font_colour,
+                                    text)
+            pos -= 1
+            if (pos + len < 0):
+                pos = offscreen_canvas.width
+                break
+            time.sleep(speed)
+            offscreen_canvas = self.matrix.SwapOnVSync(offscreen_canvas)
+
+
+    def point(self,x,y,r,g,b):
+        self.matrix.SetPixel(x,y,r,g,b)
+
+
 
 
 
@@ -655,9 +787,12 @@ def main():
     logger.info(" ".join(sys.argv))
     print_args(args, logger=logger)
 
+
+    mylights = myLightBoard(args)
+
     #For each IP we want to set up a class to contain it and all its devices.
 
-    devices = MinknowConnectRPC(args,args.host)
+    devices = MinknowConnectRPC(args,args.host,mylights)
 
     try:
 
@@ -665,7 +800,7 @@ def main():
             #log.info(devices.minIONnumber())
             #log.info(devices.get_minIONdetails())
             for minION, values in devices.get_minIONdetails().items():
-                log.info(minION)
+                #log.info(minION)
 
                 #log.info(values.keys())
 
